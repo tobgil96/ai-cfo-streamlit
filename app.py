@@ -3,9 +3,9 @@ import pandas as pd
 import os
 from openai import OpenAI
 
-# -----------------------------------
-# Page setup
-# -----------------------------------
+# --------------------------------------------------
+# Page config
+# --------------------------------------------------
 st.set_page_config(
     page_title="AI CFO Dashboard",
     layout="wide"
@@ -13,21 +13,22 @@ st.set_page_config(
 
 st.title("AI CFO – Cashflow & Entscheidungen")
 
-# -----------------------------------
+# --------------------------------------------------
 # Load data
-# -----------------------------------
+# --------------------------------------------------
 try:
     df = pd.read_csv("finance_data.csv")
 except Exception as e:
     st.error("finance_data.csv konnte nicht geladen werden.")
+    st.code(str(e))
     st.stop()
 
 st.subheader("Finanzdaten")
-st.dataframe(df, use_container_width=True)
+st.dataframe(df, width="stretch")
 
-# -----------------------------------
+# --------------------------------------------------
 # KPI calculations
-# -----------------------------------
+# --------------------------------------------------
 df["profit"] = df["revenue"] - df["fixed_costs"] - df["variable_costs"]
 
 avg_profit = float(df["profit"].mean())
@@ -41,9 +42,9 @@ c3.metric("Runway (Monate)", f"{runway:,.1f}" if runway else "n/a")
 
 st.divider()
 
-# -----------------------------------
-# AI CFO decision engine
-# -----------------------------------
+# --------------------------------------------------
+# AI CFO Decision Engine
+# --------------------------------------------------
 st.subheader("KI-Entscheidung (AI CFO)")
 
 api_key = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", ""))
@@ -56,6 +57,7 @@ if st.button("Empfehlung berechnen"):
 
         prompt = f"""
 Du bist CFO eines Unternehmens.
+
 Analysiere die folgenden Finanzdaten (Monat, Umsatz, Fixkosten, variable Kosten, Cash).
 
 Gib:
@@ -80,8 +82,12 @@ Daten:
             st.success("Analyse abgeschlossen")
             st.write(response.choices[0].message.content)
 
-        except Exception:
+        except Exception as e:
             st.warning("KI aktuell nicht verfügbar – Demo-Fallback wird angezeigt.")
+
+            # 🔍 WICHTIG FÜR DEN KURS: echter Fehler sichtbar
+            st.subheader("Technischer Fehler (Debug)")
+            st.code(str(e))
 
             st.subheader("Demo-Empfehlung (Fallback)")
             st.write(
